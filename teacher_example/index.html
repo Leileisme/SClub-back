@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app">
+      <input type="file" @input="onFileInput" />
+      <img :src="img" alt="" width="100" height="100" />
+    </div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.15/vue.global.min.js"
+      integrity="sha512-YX1AhLUs26nJDkqXrSgg6kjMat++etdfsgcphWSPcglBGp/sk5I0/pKuu/XIfOCuzDU4GHcOB1E9LlveutWiBw=="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      const { createApp, ref, onMounted } = Vue
+      const app = createApp({
+        setup() {
+          /*************** 選圖片 ***************/
+          const img = ref('')
+          const input = ref(null)
+          const onFileInput = (e) => {
+            // new FileReader() 讀檔案的物件
+            const reader = new FileReader()
+            reader.onload = async (ee) => {
+              img.value = ee.target.result
+            }
+            // .readAsDataURL() 讀取選到的圖片，因為FileReader()的語法
+            reader.readAsDataURL(e.target.files[0])
+          }
+          return {
+            img,
+            onFileInput
+          }
+        }
+      }).mount('#app')
+    </script>
+  </body>
+</html>

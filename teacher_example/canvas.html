@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <input type="file" name="" id="input-file" />
+    <input type="text" name="" id="input-text" />
+    <input type="color" name="" id="input-color" value="#ffffff" />
+    <input type="button" value="保存" id="btn-save" />
+    <canvas width="1000" height="1000" id="canvas"></canvas>
+    <script>
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+      const inputText = document.getElementById('input-text')
+      const inputColor = document.getElementById('input-color')
+      const inputFile = document.getElementById('input-file')
+      const btnSave = document.getElementById('btn-save')
+
+      let text = { text: '', x: 100, y: 100, color: '#ffffff' }
+      let image = new Image()
+
+      inputText.addEventListener('input', () => {
+        text.text = inputText.value
+        update()
+      })
+      inputColor.addEventListener('input', () => {
+        text.color = inputColor.value
+        update()
+      })
+      inputFile.addEventListener('input', (e) => {
+        // new FileReader() 讀檔案的物件
+        const reader = new FileReader()
+        // 當 FileReader 讀取完的時候
+        reader.onload = async (ee) => {
+          // 修改圖片來源
+          image.src = ee.target.result
+          // 當圖片載入完畢時
+          image.onload = () => {
+            // 修改畫布大小
+            canvas.width = image.width
+            canvas.height = image.height
+            // 重繪一次
+            update()
+          }
+        }
+        // .readAsDataURL() 讀取選到的圖片，因為FileReader()的語法
+        reader.readAsDataURL(e.target.files[0])
+      })
+
+      // 填充矩形函式太長，寫成 function
+      const colorRect = (x, y, width, height, color) => {
+        // 設定背景色 .fillStyle
+        // 填充矩形 .fillRect(X, Y, 長, 寬)
+        ctx.fillStyle = color
+        ctx.fillRect(x, y, width, height)
+      }
+
+      // 填充圓形函式太長，寫成 function
+      const colorCircle = (x, y, radius, color) => {
+        // 填充圖形
+        // 開始路徑 .beginPath()
+        // 畫圓 .arc(X, Y, 半徑, 起始角(弧度), 結束角(弧度), 是否逆時針)，0.5 PI 為 1/4 圓
+        // 填充目前路徑 .fill()
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2, true)
+        ctx.fill()
+      }
+
+      // 填充文字
+      const colorText = (text, x, y, color) => {
+        ctx.font = '40px Arial'
+        ctx.fillStyle = color
+        ctx.fillText(text, x, y)
+      }
+
+      // 畫背景
+      const drawBg = () => {
+        // 先畫底色
+        colorRect(0, 0, 1000, 1000, 'gray')
+        // 再畫圖片
+        ctx.drawImage(image, 0, 0, image.width, image.height)
+      }
+
+      // 畫文字
+      const drawText = () => {
+        colorText(text.text, text.x, text.y, text.color)
+      }
+
+      // 重繪
+      const update = () => {
+        drawBg()
+        drawText()
+      }
+      update()
+
+      // 拖曳狀態
+      let drag = false
+      // 當滑鼠移動時
+      canvas.onmousemove = (e) => {
+        // 如果是拖曳中
+        if (drag) {
+          // 取得 canvas 在視窗中的位置
+          const rect = canvas.getBoundingClientRect()
+
+          // 取得滑鼠在 canvas 的 X 座標
+          // event.clientX/Y 獲取滑鼠在瀏覽器視窗的 X/Y 座標
+          // https://segmentfault.com/a/1190000002405897
+          text.x = event.clientX - rect.left
+          text.y = event.clientY - rect.top
+          update()
+        }
+      }
+      // 滑鼠點下去時，設定拖曳中
+      canvas.onmousedown = (e) => {
+        drag = true
+      }
+      // 滑鼠起來時，設定不是拖曳中
+      canvas.onmouseup = (e) => {
+        drag = false
+      }
+
+      // 保存
+      btnSave.addEventListener('click', () => {
+        console.log(canvas)
+        const data = canvas.toDataURL('image/png')
+        console.log(data)
+      })
+
+      // 後端保存雲端寫法，或文字放資料庫
+      // https://github.com/cloudinary/cloudinary_npm/issues/177
+
+      // kento之前寫的檔案
+      // https://github.com/rogeraabbccdd/Asacoco-Generator/blob/master/js/app.js#L139
+      // view-source:https://rogeraabbccdd.github.io/JS-Practices/breakout-clone/
+    </script>
+  </body>
+</html>
