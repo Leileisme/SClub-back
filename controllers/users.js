@@ -47,9 +47,14 @@ export const create = async (req, res) => {
 // 回傳的資料以後可以看看要不要增加
 export const login = async (req, res) => {
   try {
-    const CLUB_CORE_MEMBER = await users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME')
-    const EVENTS = await events.find({ HOST: req.user._id }, '_id')
-    const EVENTS_ID = EVENTS.map(e => e._id)
+    const [CLUB_CORE_MEMBER, EVENTS, joinEvent] = await Promise.all([
+      users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME'),
+      events.find({ HOST: req.user._id }, '_id'),
+      users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('TICKET_CART.EVENT')
+    ])
+
+    const MAKE_EVENTS_ID = EVENTS.map(e => e._id)
+
     // jwt.sign 創造一個新的JWT，並接受三個參數 ( 物件、密鑰、選項 )
     const TOKEN = jwt.sign({ _id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '7 days' })
     req.user.TOKENS.push(TOKEN)
@@ -69,7 +74,7 @@ export const login = async (req, res) => {
         CLUB_TH: req.user.CLUB_TH,
         CLUB_CATEGORY: req.user.CLUB_CATEGORY,
         IMAGE: req.user.IMAGE,
-        TICKET_CART: req.user.TICKET_CART,
+        TICKET_CART: joinEvent.TICKET_CART,
         SCORES: req.user.SCORES,
         NOTIFY: req.user.NOTIFY,
         KEEP_POST: req.user.KEEP_POST,
@@ -84,7 +89,7 @@ export const login = async (req, res) => {
         DESCRIBE: req.user.DESCRIBE,
         CLUB_CORE_MEMBER: CLUB_CORE_MEMBER.CLUB_CORE_MEMBER,
         _id: req.user._id,
-        EVENTS_ID
+        MAKE_EVENTS_ID
       }
     })
   } catch (error) {
@@ -139,9 +144,20 @@ export const getProfile = async (req, res) => {
     // .findById( 使用者_id, 要關聯的欄位 ).populate ( 要關聯的欄位的_id且有ref , 透過ref取得ref關聯的欄位 )
     // 因為 models 裡的 CLUB_CORE_MEMBER.USER 有 ref: 'users'，所以可以直接取 USER_NAME
 
-    const CLUB_CORE_MEMBER = await users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME')
-    const EVENTS = await events.find({ HOST: req.user._id }, '_id')
-    const EVENTS_ID = EVENTS.map(e => e._id)
+    const [CLUB_CORE_MEMBER, EVENTS, joinEvent] = await Promise.all([
+      users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME'),
+      events.find({ HOST: req.user._id }, '_id'),
+      users.findById(req.user._id).populate({ path: 'TICKET_CART.EVENT' }).populate({ path: 'TICKET_CART.EVENT', populate: { path: 'HOST', select: 'IMAGE' } })
+    ])
+
+    const MAKE_EVENTS_ID = EVENTS.map(e => e._id)
+
+    // 以上合併以下的寫法
+    // const CLUB_CORE_MEMBER = await users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME')
+    // const EVENTS = await events.find({ HOST: req.user._id }, '_id')
+    // const MAKE_EVENTS_ID = EVENTS.map(e => e._id)
+    // const joinEvent = await users.findById(req.user._id, 'CLUB_CORE_MEMBER').populate('TICKET_CART.EVENT')
+
     res.status(200).json({
       success: true,
       massage: '',
@@ -156,7 +172,7 @@ export const getProfile = async (req, res) => {
         CLUB_TH: req.user.CLUB_TH,
         CLUB_CATEGORY: req.user.CLUB_CATEGORY,
         IMAGE: req.user.IMAGE,
-        TICKET_CART: req.user.TICKET_CART,
+        TICKET_CART: joinEvent.TICKET_CART,
         SCORES: req.user.SCORES,
         NOTIFY: req.user.NOTIFY,
         KEEP_POST: req.user.KEEP_POST,
@@ -171,10 +187,9 @@ export const getProfile = async (req, res) => {
         DESCRIBE: req.user.DESCRIBE,
         CLUB_CORE_MEMBER: CLUB_CORE_MEMBER.CLUB_CORE_MEMBER,
         _id: req.user._id,
-        EVENTS_ID
+        MAKE_EVENTS_ID
       }
     })
-    console.log(req.user._id, 'req.user._id getProfile')
   } catch (error) {
     console.log(error, 'users getProfile controller')
     res.status(500).json({
@@ -201,7 +216,6 @@ export const getUser = async (req, res) => {
     ).limit(10)
     // 限制回傳的數量
 
-    console.log(data, 'data getUser')
     res.status(200).json({
       success: true,
       message: '',
@@ -218,9 +232,9 @@ export const getUser = async (req, res) => {
   }
 }
 
+// 找出一個使用者
 export const getUserName = async (req, res) => {
   try {
-    console.log(req.params)
     // .lean() 轉成純 JS 變數
     const result = await users.findOne({ USER_NAME: req.params.USER_NAME }).lean()
     if (!result) throw new Error('NOT FOUND')
@@ -241,10 +255,13 @@ export const getUserName = async (req, res) => {
         CLUB_TH: club.CLUB_TH
       }
     })
+    // 找出使用者主辦的活動
     const EVENTS = await events.find({ HOST: result._id }, '_id')
-    const EVENTS_ID = EVENTS.map(e => {
+    const MAKE_EVENTS_ID = EVENTS.map(e => {
       return e._id
     })
+    // 找出使用者參加的活動，好像不用詳細資訊，先註解
+    // const joinEvent = await users.findOne({ USER_NAME: req.params.USER_NAME }, 'TICKET_CART').populate('TICKET_CART.EVENT')
 
     res.status(200).json({
       success: true,
@@ -252,7 +269,8 @@ export const getUserName = async (req, res) => {
       result: {
         ...result,
         IS_CORE_MEMBER: clubs,
-        EVENTS_ID
+        MAKE_EVENTS_ID
+        // TICKET_CART: joinEvent.TICKET_CART
       }
     })
   } catch (error) {
@@ -279,7 +297,6 @@ export const edit = async (req, res) => {
         req.body.CLUB_CORE_MEMBER[idx].USER = user._id
       }
     }
-    console.log(req.body)
     // findOneAndUpdate用於找到並更新 MongoDB 中的特定文件
     // 三個參數(尋找資料的key,更新的資料,選項)
     await users.findOneAndUpdate({ USER_NAME: req.body.USER_NAME }, req.body, { runValidators: true }).orFail(new Error('NOT FOUND'))

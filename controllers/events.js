@@ -115,11 +115,11 @@ export const edit = async (req, res) => {
     // findByIdAndUpdate用於找到並更新 MongoDB 中的特定文件
     // 三個參數(尋找資料的_id,更新的資料,選項)
     // 另外還有 findOneAndUpdate
-    await events.findByIdAndUpdate({ _id: req.params.id }, req.body, { runValidators: true }).orFail(new Error('NOT FOUND'))
-
+    const updatedEvent = await events.findByIdAndUpdate({ _id: req.params.id }, req.body, { runValidators: true, new: true }).orFail(new Error('NOT FOUND'))
     res.status(200).json({
       success: true,
-      message: ''
+      message: '',
+      ticketId: updatedEvent.TICKET[updatedEvent.TICKET.length - 1]._id
     })
   } catch (error) {
     console.log(error)
