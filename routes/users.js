@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { create, login, logout, extend, getProfile, getUser, edit, getUserName } from '../controllers/users.js'
+import { create, login, logout, extend, getProfile, getUser, edit, getUserName, usedTicket } from '../controllers/users.js'
 import * as auth from '../middlewares/auth.js'
 
 import fileUpload from '../middlewares/fileUpload.js'
@@ -13,6 +13,8 @@ router.patch('/extend', auth.jwt, extend)
 router.get('/profile', auth.jwt, getProfile)
 router.get('/getUser', auth.jwt, getUser)
 router.get('/:USER_NAME', getUserName)
+router.patch('/usedTicket', auth.jwt, fileUpload, usedTicket)
+
 router.patch('/edit', auth.jwt, fileUpload, edit)
 
 export default router

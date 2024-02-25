@@ -13,7 +13,8 @@ export const create = async (req, res) => {
     res.status(200).json({
       success: true,
       message: '',
-      result
+      result,
+      ticketId: result._id
     })
   } catch (error) {
     console.log(error, 'events controllers 的 error')
@@ -79,7 +80,10 @@ export const getEventById = async (req, res) => {
         path: 'HOST',
         select: 'NICK_NAME CLUB_TH IMAGE DESCRIBE USER_NAME'
       }
-    )
+    ).populate({
+      path: 'TICKET.USER',
+      select: 'USER_NAME IMAGE NICK_NAME'
+    })
 
     if (!result) throw new Error('NOT FOUND')
 
@@ -98,7 +102,7 @@ export const getEventById = async (req, res) => {
     } else if (error.message === 'NOT FOUND') {
       res.status(404).json({
         success: false,
-        message: '查無商品'
+        message: '查無事件'
       })
     } else {
       res.status(500).json({
@@ -139,6 +143,97 @@ export const edit = async (req, res) => {
       res.status(400).json({
         success: false,
         message
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        message: '未知錯誤'
+      })
+    }
+  }
+}
+
+export const useTicket = async (req, res) => {
+  try {
+    // findByIdAndUpdate用於找到並更新 MongoDB 中的特定文件
+    // 三個參數(尋找資料的_id,更新的資料,選項)
+    // 另外還有 findOneAndUpdate
+    const ticketId = req.body.ticketId
+    const usedValue = req.body.used // 這是你要更新的值
+    const event = await events.findById(req.params.id).orFail(new Error('NOT FOUND'))
+
+    const ticket = event.TICKET.find(ticket => ticket._id.toString() === ticketId)
+    if (!ticket) {
+      throw new Error('TICKET NOT FOUND')
+    }
+    ticket.USED = usedValue
+
+    // 儲存事件
+    const updatedEvent = await event.save()
+
+    // 關聯 events 的 TICKET.USER 欄位
+    const populatedEvent = await events.findById(updatedEvent._id).populate('TICKET.USER')
+
+    // 找到關聯的使用者名稱
+    const USER_NAME = populatedEvent.TICKET.find(ticket => ticket._id.toString() === ticketId).USER.USER_NAME
+
+    res.status(200).json({
+      success: true,
+      message: '',
+      USER_NAME
+    })
+  } catch (error) {
+    console.log(error)
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(400).json({
+        success: false,
+        message: 'ID 格式錯誤'
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(404).json({
+        success: false,
+        message: '查無票券'
+      })
+    } else if (error.name === 'ValidationError') {
+      const key = Object.keys(error.errors)[0]
+      const message = error.errors[key].message
+      res.status(400).json({
+        success: false,
+        message
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        message: '未知錯誤'
+      })
+    }
+  }
+}
+
+export const deleteEvent = async (req, res) => {
+  try {
+    console.log(req.params.id, 'req.params.id')
+    if (!validator.isMongoId(req.params.id)) throw new Error('ID')
+
+    // findByIdAndDelete 用於找到並刪除 MongoDB 中的特定文件
+    const result = await events.findByIdAndDelete(req.params.id).orFail(new Error('NOT FOUND'))
+
+    res.status(200).json({
+      success: true,
+      message: '成功刪除活動',
+      result
+    })
+  } catch (error) {
+    console.log(error, 'events controllers 的 error')
+    if (error.name === 'CastError' || error.message === 'ID') {
+      res.status(400).json({
+        success: false,
+        message: 'ID 格式錯誤'
+      })
+    } else if (error.message === 'NOT FOUND') {
+      res.status(404).json({
+        success: false,
+        message: '查無事件'
       })
     } else {
       res.status(500).json({

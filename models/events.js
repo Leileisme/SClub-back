@@ -10,7 +10,7 @@ const ticketManageSchema = new Schema({
   },
   // 2.是否用過
   USED: {
-    type: Boolean,
+    type: Number,
     required: [true, '缺少「票是否用過」'],
     default: false
   }

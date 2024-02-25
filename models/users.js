@@ -40,7 +40,11 @@ const ticketCartSchema = new Schema({
   },
   // 2.票券ID(從events取得票券的_id)
   TICKET: {
-    type: ObjectId
+    type: ObjectId,
+    ref: 'events'
+  },
+  USED: {
+    type: Number
   }
 })
 
