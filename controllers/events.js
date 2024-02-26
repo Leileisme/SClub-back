@@ -35,6 +35,7 @@ export const create = async (req, res) => {
   }
 }
 
+// 找活動
 export const getEventAll = async (req, res) => {
   try {
     const regex = new RegExp(req.query.search || '', 'i')
@@ -43,16 +44,30 @@ export const getEventAll = async (req, res) => {
       $or: [
         { TITLE: regex },
         { CITY: regex },
-        { DATE: regex }
+        { DATE: regex },
+        { IS_PUBLIC: regex },
+        { CATEGORY: regex }
       ]
-    }).limit(10)
+    })
+
+    const result = data.map(item => ({
+      TITLE: item.TITLE,
+      DATE: item.DATE,
+      CITY: item.CITY,
+      IS_PUBLIC: item.IS_PUBLIC,
+      CATEGORY: item.CATEGORY,
+      PRE_SALE: item.PRE_SALE,
+      DESCRIPTION: item.DESCRIPTION,
+      IMAGE: item.IMAGE,
+      HOST: item.HOST,
+      CO_ORGANIZER: item.CO_ORGANIZER,
+      _id: item._id
+    }))
 
     res.status(200).json({
       success: true,
       message: '',
-      result: {
-        data
-      }
+      result
     })
   } catch (error) {
     console.log(error)
@@ -110,6 +125,53 @@ export const getEventById = async (req, res) => {
         message: '未知錯誤'
       })
     }
+  }
+}
+
+// 待確認
+export const get = async (req, res) => {
+  try {
+    const sortBy = req.query.sortBy || 'createdAt'
+    const sortOrder = parseInt(req.query.sortOrder) || -1
+    const itemsPerPage = parseInt(req.query.itemsPerPage) || 20
+    const page = parseInt(req.query.page) || 1
+    const regex = new RegExp(req.query.search || '', 'i')
+
+    const data = await events
+      .find({
+        sell: true,
+        $or: [
+          { TITLE: regex },
+          { CITY: regex },
+          { DATE: regex },
+          { IS_PUBLIC: regex },
+          { CATEGORY: regex }
+        ]
+      })
+      // const text = 'a'
+      // const obj = { [text]: 1 }
+      // obj.a = 1
+      .sort({ [sortBy]: sortOrder })
+      // 如果一頁 10 筆
+      // 第 1 頁 = 0 ~ 10 = 跳過 0 筆 = (1 - 1) * 10
+      // 第 2 頁 = 11 ~ 20 = 跳過 10 筆 = (2 - 1) * 10
+      // 第 3 頁 = 21 ~ 30 = 跳過 20 筆 = (3 - 1) * 10
+      .skip((page - 1) * itemsPerPage)
+      .limit(itemsPerPage === -1 ? undefined : itemsPerPage)
+
+    res.status(200).json({
+      success: true,
+      message: '',
+      result: {
+        data
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      success: false,
+      message: '未知錯誤'
+    })
   }
 }
 
