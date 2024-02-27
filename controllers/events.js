@@ -61,7 +61,8 @@ export const getEventAll = async (req, res) => {
       IMAGE: item.IMAGE,
       HOST: item.HOST,
       CO_ORGANIZER: item.CO_ORGANIZER,
-      _id: item._id
+      _id: item._id,
+      TICKET: item.TICKET
     }))
 
     res.status(200).json({

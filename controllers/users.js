@@ -255,13 +255,17 @@ export const getUserName = async (req, res) => {
         CLUB_TH: club.CLUB_TH
       }
     })
-    // 找出使用者主辦的活動
-    const EVENTS = await events.find({ HOST: result._id }, '_id')
+
+    const [CLUB_CORE_MEMBER, EVENTS, joinEvent] = await Promise.all([
+      users.findById(result._id, 'CLUB_CORE_MEMBER').populate('CLUB_CORE_MEMBER.USER', 'USER_NAME'),
+      // 找出使用者主辦的活動
+      events.find({ HOST: result._id }, '_id'),
+      // 找出使用者參加的活動所有資訊，並取得 HOST 主辦者的 IMAGE
+      users.findById(result._id).populate({ path: 'TICKET_CART.EVENT' }).populate({ path: 'TICKET_CART.EVENT', populate: { path: 'HOST', select: 'IMAGE' } })
+    ])
     const MAKE_EVENTS_ID = EVENTS.map(e => {
       return e._id
     })
-    // 找出使用者參加的活動，好像不用詳細資訊，先註解
-    // const joinEvent = await users.findOne({ USER_NAME: req.params.USER_NAME }, 'TICKET_CART').populate('TICKET_CART.EVENT')
 
     res.status(200).json({
       success: true,
@@ -269,8 +273,9 @@ export const getUserName = async (req, res) => {
       result: {
         ...result,
         IS_CORE_MEMBER: clubs,
-        MAKE_EVENTS_ID
-        // TICKET_CART: joinEvent.TICKET_CART
+        MAKE_EVENTS_ID,
+        TICKET_CART: joinEvent.TICKET_CART,
+        CLUB_CORE_MEMBER: CLUB_CORE_MEMBER.CLUB_CORE_MEMBER
       }
     })
   } catch (error) {
