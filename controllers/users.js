@@ -212,8 +212,8 @@ export const getUser = async (req, res) => {
       ],
       ROLE: trusted({ $in: role })
     },
-    { USER_NAME: 1, NICK_NAME: 1, IMAGE: 1, ROLE: 1 }
-    ).limit(10)
+    { USER_NAME: 1, NICK_NAME: 1, IMAGE: 1, SCHOOL_NAME: 1, SCHOOL_CITY: 1, CLUB_TH: 1, CLUB_CATEGORY: 1, DESCRIBE: 1 }
+    )
     // 限制回傳的數量
 
     res.status(200).json({

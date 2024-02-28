@@ -14,7 +14,6 @@ router.get('/profile', auth.jwt, getProfile)
 router.get('/getUser', auth.jwt, getUser)
 router.get('/:USER_NAME', getUserName)
 router.patch('/usedTicket', auth.jwt, fileUpload, usedTicket)
-
 router.patch('/edit', auth.jwt, fileUpload, edit)
 
 export default router
