@@ -291,7 +291,8 @@ export const edit = async (req, res) => {
   try {
     req.body.IMAGE = req.file?.path
     if (!req.body.IMAGE) {
-      req.body.IMAGE = 'https://source.boringavatars.com/beam/120/' + req.user.EMAIL
+      // req.body.IMAGE = 'https://source.boringavatars.com/beam/120/' + req.user.EMAIL
+      req.body.IMAGE = 'https://res.cloudinary.com/dk3yfzctz/image/upload/v1740328815/kom9cfftzix9oifpow8i.png'
     }
 
     if (req.body.CLUB_CORE_MEMBER) {
