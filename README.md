@@ -7,10 +7,11 @@
 帳號：ndhu_cdpd@gmail.com
 密碼：nnnnnn
 
-(一陣子沒開網站時，部署可能會休眠，要等一下下，敬請見諒！)
+(部署在免費平台，平時15分鐘沒動會休眠，啟動請稍待一下！)
 </pre>
 
-[前往 SClub](https://leileisme.github.io/SClub-front/#/login)
+## [前往 SClub 網站](https://leileisme.github.io/SClub-front/#/login)
+## [前往 SClub frontend GitHub Repo](https://github.com/Leileisme/SClub-front)
 
 ![專題說明1](https://raw.githubusercontent.com/Leileisme/SClub-front/main/public/readme-image/01.png)
 
